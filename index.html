@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>1024 · 程序员节快乐</title>
+<style>
+/* ============ 自定义属性（可动画的色相） ============ */
+@property --hue { syntax: '<number>'; inherits: true; initial-value: 200; }
+
+:root{
+  --hue: 200;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans", "Hiragino Sans GB", "Yu Gothic UI", "Microsoft YaHei", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans", "Segoe UI", sans-serif;
+  transition: --hue .9s ease;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+html, body{
+  height:100%;
+  overflow:hidden;
+  background:#05070f;
+  color:#e8eefc;
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 细微噪点，增加质感 */
+body::after{
+  content:'';
+  position:fixed; inset:0;
+  z-index:2;
+  pointer-events:none;
+  opacity:.04;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============ 背景层 ============ */
+#bg{
+  position:fixed; inset:0;
+  z-index:0;
+  display:block;
+}
+
+.glow{
+  position:fixed;
+  border-radius:50%;
+  pointer-events:none;
+  z-index:1;
+  will-change: transform;
+}
+.g1{
+  width:85vmax; height:85vmax;
+  left:-28vmax; top:-32vmax;
+  background: radial-gradient(circle, hsl(var(--hue) 95% 55% / .30) 0%, transparent 62%);
+  animation: drift1 24s ease-in-out infinite alternate;
+}
+.g2{
+  width:70vmax; height:70vmax;
+  right:-25vmax; bottom:-28vmax;
+  background: radial-gradient(circle, hsl(calc(var(--hue) + 55) 95% 60% / .24) 0%, transparent 62%);
+  animation: drift2 28s ease-in-out infinite alternate;
+}
+.g3{
+  width:50vmax; height:50vmax;
+  left:40%; top:35%;
+  background: radial-gradient(circle, hsl(calc(var(--hue) + 120) 95% 60% / .14) 0%, transparent 65%);
+  animation: drift3 20s ease-in-out infinite alternate;
+}
+@keyframes drift1{
+  0%{ transform: translate3d(0,0,0) scale(1); }
+  100%{ transform: translate3d(10vw, 9vh, 0) scale(1.18); }
+}
+@keyframes drift2{
+  0%{ transform: translate3d(0,0,0) scale(1.1); }
+  100%{ transform: translate3d(-12vw, -8vh, 0) scale(.92); }
+}
+@keyframes drift3{
+  0%{ transform: translate3d(-6vw, 4vh, 0) scale(.9); }
+  100%{ transform: translate3d(8vw, -6vh, 0) scale(1.2); }
+}
+
+/* 烟花画布 */
+#fw{
+  position:fixed; inset:0;
+  z-index:5;
+  pointer-events:none;
+  display:block;
+}
+
+/* ============ 语言下拉 ============ */
+.lang-wrap{
+  position: fixed;
+  top: clamp(14px, 2.4vh, 26px);
+  right: clamp(14px, 2.4vw, 26px);
+  z-index: 40;
+}
+.lang-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: .5em;
+  font-family: var(--mono);
+  font-size: clamp(.7rem, 1.6vw, .82rem);
+  letter-spacing: .08em;
+  padding: .55em 1.05em;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--hue) 90% 70% / .35);
+  background: hsl(var(--hue) 90% 60% / .08);
+  color: hsl(var(--hue) 95% 84%);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background .35s, border-color .35s, box-shadow .35s, transform .2s;
+  box-shadow: 0 0 0 0 hsl(var(--hue) 100% 62% / 0);
+}
+.lang-btn:hover{
+  background: hsl(var(--hue) 90% 60% / .18);
+  border-color: hsl(var(--hue) 95% 72% / .7);
+  box-shadow: 0 0 24px -4px hsl(var(--hue) 100% 62% / .9);
+}
+.lang-btn:active{ transform: scale(.94); }
+.lang-btn .lang-caret{
+  transition: transform .3s cubic-bezier(.22,1,.36,1);
+  opacity: .8;
+}
+.lang-wrap.open .lang-caret{ transform: rotate(180deg); }
+
+.lang-menu{
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 152px;
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid hsl(var(--hue) 90% 70% / .3);
+  background: rgba(10, 16, 32, .92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 22px 60px -18px hsl(var(--hue) 100% 60% / .9),
+              inset 0 1px 0 rgba(255,255,255,.06);
+  list-style: none;
+  opacity: 0;
+  transform: translateY(-8px) scale(.97);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity .28s cubic-bezier(.22,1,.36,1), transform .28s cubic-bezier(.22,1,.36,1);
+}
+.lang-wrap.open .lang-menu{
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.lang-menu li{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1em;
+  padding: .58em .75em;
+  border-radius: 9px;
+  font-size: clamp(.78rem, 1.6vw, .86rem);
+  color: #c5d2ea;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+  font-family: var(--sans);
+  letter-spacing: .01em;
+}
+.lang-menu li:hover{
+  background: hsl(var(--hue) 90% 60% / .16);
+  color: #fff;
+}
+.lang-menu li.active{
+  color: hsl(var(--hue) 100% 82%);
+}
+.lang-menu li.active::after{
+  content: '✓';
+  font-size: .9em;
+  color: hsl(var(--hue) 100% 72%);
+}
+
+/* ============ 滚动容器 ============ */
+.scroller{
+  position:fixed; inset:0;
+  z-index:10;
+  overflow-y:auto;
+  overflow-x:hidden;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.scroller::-webkit-scrollbar{ width:0; height:0; }
+
+.page{
+  position:relative;
+  height:100vh;
+  height:100dvh;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:5vh 4vw;
+  scroll-snap-align:start;
+}
+
+.wrap{
+  width:min(1080px, 94vw);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  gap: clamp(.7rem, 1.8vh, 1.6rem);
+}
+
+/* ============ 入场动画 ============ */
+.reveal{
+  opacity:0;
+  transform: translateY(38px) scale(.985);
+  transition: opacity .95s cubic-bezier(.22,1,.36,1),
+              transform .95s cubic-bezier(.22,1,.36,1);
+  transition-delay: var(--d, 0s);
+  will-change: transform, opacity;
+}
+.page.active .reveal{
+  opacity:1;
+  transform: none;
+}
+
+/* ============ 通用文字 ============ */
+.kicker{
+  font-family: var(--mono);
+  font-size: clamp(.72rem, 1.5vw, .95rem);
+  letter-spacing: .38em;
+  text-transform: uppercase;
+  color: hsl(var(--hue) 95% 72% / .85);
+  padding-left: .38em;
+}
+
+.pill{
+  font-family: var(--mono);
+  font-size: clamp(.75rem, 1.4vw, .9rem);
+  letter-spacing: .5em;
+  padding: .5em 1.1em .5em 1.6em;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--hue) 90% 70% / .35);
+  background: hsl(var(--hue) 90% 60% / .08);
+  color: hsl(var(--hue) 95% 80%);
+  box-shadow: 0 0 26px -6px hsl(var(--hue) 100% 60% / .65),
+              inset 0 0 18px hsl(var(--hue) 100% 60% / .12);
+}
+
+.title{
+  font-size: clamp(2rem, 6.5vw, 4.6rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -.02em;
+  background: linear-gradient(180deg, #ffffff 0%, hsl(var(--hue) 100% 78%) 60%, hsl(calc(var(--hue) + 45) 100% 62%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 34px hsl(var(--hue) 100% 60% / .45));
+}
+.title sup{
+  font-size: .52em;
+  vertical-align: super;
+}
+.title.small{
+  font-size: clamp(1.25rem, 3.4vw, 2.3rem);
+  font-weight: 700;
+}
+
+.desc{
+  font-size: clamp(.86rem, 1.8vw, 1.05rem);
+  line-height: 1.9;
+  color: #a8b6d0;
+  max-width: 40em;
+}
+
+.quote{
+  font-size: clamp(.82rem, 1.7vw, 1rem);
+  color: hsl(var(--hue) 90% 78% / .95);
+  font-style: italic;
+  letter-spacing: .04em;
+}
+
+/* ============ 第一页 Hero ============ */
+.hero-title{
+  font-family: var(--mono);
+  font-size: clamp(4.6rem, 19vw, 15rem);
+  font-weight: 800;
+  line-height: .86;
+  letter-spacing: -.05em;
+  background: linear-gradient(180deg, #ffffff 0%, hsl(var(--hue) 100% 76%) 52%, hsl(calc(var(--hue) + 50) 100% 60%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 60px hsl(var(--hue) 100% 60% / .55));
+  animation: heroPulse 4s ease-in-out infinite;
+}
+@keyframes heroPulse{
+  0%,100%{ filter: drop-shadow(0 0 45px hsl(var(--hue) 100% 60% / .45)); }
+  50%    { filter: drop-shadow(0 0 90px hsl(var(--hue) 100% 65% / .8)); }
+}
+
+.hero-line{
+  width: min(420px, 60vw);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--hue) 100% 70% / .9), transparent);
+  box-shadow: 0 0 18px hsl(var(--hue) 100% 65% / .8);
+}
+
+.hero-sub{
+  font-size: clamp(1rem, 3vw, 1.7rem);
+  letter-spacing: .52em;
+  padding-left: .52em;
+  color: #dbe6fb;
+  font-weight: 300;
+}
+
+.typer{
+  font-family: var(--mono);
+  font-size: clamp(.85rem, 1.9vw, 1.15rem);
+  color: hsl(var(--hue) 90% 78%);
+  margin-top: .6rem;
+  min-height: 1.6em;
+  display: flex;
+  align-items: center;
+  gap: .5em;
+}
+.typer .tk{ color: hsl(var(--hue) 90% 60% / .8); }
+
+.caret{
+  display: inline-block;
+  width: .62ch;
+  height: 1.05em;
+  background: hsl(var(--hue) 100% 72%);
+  box-shadow: 0 0 12px hsl(var(--hue) 100% 65%);
+  vertical-align: -.14em;
+  animation: blink 1.05s steps(1) infinite;
+}
+@keyframes blink{ 50%{ opacity: 0; } }
+
+.hint{
+  margin-top: clamp(.8rem, 3vh, 2.2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .7rem;
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .3em;
+  color: #7f8db0;
+  animation: bob 2.4s ease-in-out infinite;
+}
+.mouse{
+  width: 22px; height: 36px;
+  border: 1.5px solid hsl(var(--hue) 70% 60% / .55);
+  border-radius: 12px;
+  position: relative;
+}
+.mouse i{
+  position: absolute;
+  left: 50%; top: 8px;
+  width: 3px; height: 7px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: hsl(var(--hue) 95% 70%);
+  animation: wheel 1.6s ease-in-out infinite;
+}
+@keyframes wheel{
+  0%{ transform: translateY(0); opacity:1; }
+  70%{ transform: translateY(10px); opacity:0; }
+  100%{ transform: translateY(0); opacity:0; }
+}
+@keyframes bob{
+  0%,100%{ transform: translateY(0); }
+  50%{ transform: translateY(6px); }
+}
+
+/* ============ 第二页 卡片 ============ */
+.cards{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(.5rem, 1.6vw, 1rem);
+  margin: .4rem 0;
+}
+.mini{
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  padding: clamp(.7rem, 2vw, 1.1rem) clamp(1rem, 2.6vw, 1.7rem);
+  border-radius: 16px;
+  border: 1px solid hsl(var(--hue) 80% 70% / .2);
+  background: linear-gradient(160deg, hsl(var(--hue) 70% 45% / .14), rgba(255,255,255,.025));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: .4s cubic-bezier(.22,1,.36,1);
+}
+.mini:hover{
+  transform: translateY(-5px);
+  border-color: hsl(var(--hue) 95% 72% / .55);
+  box-shadow: 0 20px 46px -22px hsl(var(--hue) 100% 60% / 1),
+              inset 0 0 24px hsl(var(--hue) 100% 60% / .1);
+}
+.mini b{
+  font-family: var(--mono);
+  font-size: clamp(1.05rem, 2.6vw, 1.5rem);
+  color: hsl(var(--hue) 100% 78%);
+  text-shadow: 0 0 20px hsl(var(--hue) 100% 60% / .7);
+}
+.mini span{
+  font-family: var(--mono);
+  font-size: clamp(.66rem, 1.4vw, .78rem);
+  color: #8e9dbb;
+  letter-spacing: .05em;
+}
+
+/* ============ 第三页 终端 ============ */
+.terminal{
+  width: min(780px, 94vw);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--hue) 80% 65% / .28);
+  background: rgba(8, 13, 26, .72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 40px 100px -34px hsl(var(--hue) 100% 55% / .85),
+              inset 0 1px 0 rgba(255,255,255,.07);
+  text-align: left;
+}
+.tbar{
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .7rem 1rem;
+  background: rgba(255,255,255,.035);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.tbar i{
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  display: block;
+}
+.tbar .r{ background:#ff5f57; }
+.tbar .y{ background:#febc2e; }
+.tbar .g{ background:#28c840; }
+.tbar span{
+  margin-left: auto;
+  margin-right: auto;
+  font-family: var(--mono);
+  font-size: .72rem;
+  color: #6d7c9b;
+  letter-spacing: .05em;
+}
+.tbody{
+  padding: clamp(.9rem, 2.4vw, 1.4rem) clamp(1rem, 2.6vw, 1.6rem);
+  font-family: var(--mono);
+  font-size: clamp(.72rem, 1.55vw, .9rem);
+  line-height: 2;
+  min-height: 15em;
+  max-height: 48vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.tbody::-webkit-scrollbar{ width:0; }
+.tline{
+  animation: lineIn .45s cubic-bezier(.22,1,.36,1) both;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.tline.cmd{
+  color: hsl(var(--hue) 95% 74%);
+  text-shadow: 0 0 14px hsl(var(--hue) 100% 60% / .55);
+}
+.tline:not(.cmd){ color: #93a2c0; }
+@keyframes lineIn{
+  from{ opacity:0; transform: translateX(-10px); }
+  to  { opacity:1; transform: none; }
+}
+
+/* ============ 第四页 语言卡片 ============ */
+.lang-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: clamp(.55rem, 1.5vw, .9rem);
+  width: min(880px, 94vw);
+  margin-top: .5rem;
+}
+.lang-card{
+  position: relative;
+  text-align: left;
+  padding: clamp(.7rem, 1.8vw, 1rem);
+  border-radius: 14px;
+  border: 1px solid hsl(var(--hue) 80% 70% / .16);
+  background: linear-gradient(160deg, hsl(var(--hue) 65% 45% / .12), rgba(255,255,255,.02));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: .4s cubic-bezier(.22,1,.36,1);
+  overflow: hidden;
+}
+.lang-card::after{
+  content:'';
+  position:absolute; inset:-40% -40% auto auto;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, hsl(var(--hue) 100% 65% / .5), transparent 70%);
+  opacity: 0;
+  transition: opacity .45s;
+  pointer-events: none;
+}
+.lang-card:hover{
+  transform: translateY(-5px);
+  border-color: hsl(var(--hue) 95% 72% / .5);
+  box-shadow: 0 22px 48px -22px hsl(var(--hue) 100% 60% / 1);
+}
+.lang-card:hover::after{ opacity: .5; }
+
+.lc-head{
+  display: flex;
+  align-items: center;
+  gap: .45em;
+  font-size: clamp(.7rem, 1.5vw, .82rem);
+  font-weight: 600;
+  color: hsl(var(--hue) 100% 82%);
+  margin-bottom: .45em;
+  letter-spacing: .02em;
+}
+.lc-head i{
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--c, hsl(var(--hue) 100% 70%));
+  box-shadow: 0 0 10px var(--c, hsl(var(--hue) 100% 70%));
+}
+.lang-card code{
+  display: block;
+  font-family: var(--mono);
+  font-size: clamp(.6rem, 1.3vw, .72rem);
+  color: #8b9ab8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============ 第五页 庆祝 ============ */
+.finale .halo{
+  position: absolute;
+  width: min(80vmin, 700px);
+  height: min(80vmin, 700px);
+  border-radius: 50%;
+  background: radial-gradient(circle, hsl(var(--hue) 100% 65% / .26), transparent 62%);
+  filter: blur(24px);
+  animation: haloPulse 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes haloPulse{
+  0%,100%{ transform: scale(.9); opacity: .55; }
+  50%    { transform: scale(1.12); opacity: 1; }
+}
+
+.final-title{
+  font-size: clamp(2.1rem, 8.5vw, 6rem);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  line-height: 1.06;
+  background: linear-gradient(180deg, #ffffff 0%, hsl(var(--hue) 100% 80%) 45%, hsl(calc(var(--hue) + 60) 100% 66%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 50px hsl(var(--hue) 100% 62% / .7));
+  animation: titleGlow 3.2s ease-in-out infinite;
+}
+@keyframes titleGlow{
+  0%,100%{ filter: drop-shadow(0 0 36px hsl(var(--hue) 100% 62% / .5)); }
+  50%    { filter: drop-shadow(0 0 80px hsl(var(--hue) 100% 68% / .95)); }
+}
+
+.final-sub{
+  font-family: var(--mono);
+  font-size: clamp(.72rem, 2vw, 1rem);
+  letter-spacing: .55em;
+  padding-left: .55em;
+  color: hsl(var(--hue) 95% 78% / .9);
+}
+
+.tags{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .55rem;
+  margin-top: .6rem;
+}
+.tags span{
+  font-family: var(--mono);
+  font-size: clamp(.64rem, 1.4vw, .78rem);
+  letter-spacing: .06em;
+  padding: .5em 1em;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--hue) 85% 70% / .3);
+  background: hsl(var(--hue) 90% 60% / .08);
+  color: hsl(var(--hue) 100% 84%);
+  transition: .35s;
+}
+.tags span:hover{
+  background: hsl(var(--hue) 90% 60% / .2);
+  border-color: hsl(var(--hue) 95% 75% / .7);
+  box-shadow: 0 0 24px -4px hsl(var(--hue) 100% 62% / .9);
+  transform: translateY(-2px);
+}
+
+.final-foot{
+  font-size: clamp(.78rem, 1.7vw, .95rem);
+  color: #93a2c0;
+  letter-spacing: .04em;
+}
+
+/* ============ 右侧导航点 ============ */
+.dots{
+  position: fixed;
+  right: clamp(12px, 2.2vw, 30px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dots button{
+  width: 9px; height: 9px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,.22);
+  cursor: pointer;
+  transition: .45s cubic-bezier(.22,1,.36,1);
+  position: relative;
+}
+.dots button::before{
+  content:'';
+  position:absolute; inset:-6px;
+  border-radius:50%;
+  border: 1px solid transparent;
+  transition: .45s;
+}
+.dots button:hover{ background: rgba(255,255,255,.5); }
+.dots button.on{
+  background: hsl(var(--hue) 100% 70%);
+  box-shadow: 0 0 16px hsl(var(--hue) 100% 65% / .95);
+  height: 26px;
+  border-radius: 999px;
+}
+.dots button.on::before{ border-color: hsl(var(--hue) 100% 70% / .45); inset:-5px; }
+
+/* ============ 彩带 ============ */
+.confetti{
+  position: fixed;
+  top: -30px;
+  z-index: 90;
+  pointer-events: none;
+  border-radius: 2px;
+  animation-name: confettiFall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  will-change: transform;
+}
+@keyframes confettiFall{
+  0%  { transform: translate3d(0,0,0) rotate(0deg); opacity: 1; }
+  85% { opacity: .85; }
+  100%{ transform: translate3d(var(--sx), 108vh, 0) rotate(var(--rot)); opacity: .05; }
+}
+
+/* ============ 非中文语言的排版微调 ============ */
+html:not([lang="zh-CN"]) .hero-sub{
+  letter-spacing: .2em;
+  padding-left: .2em;
+  font-size: clamp(.8rem, 2.2vw, 1.25rem);
+}
+html:not([lang="zh-CN"]) .final-title{
+  font-size: clamp(1.5rem, 5.2vw, 3.8rem);
+  letter-spacing: -.01em;
+}
+html:not([lang="zh-CN"]) .final-foot{
+  letter-spacing: .01em;
+}
+html:not([lang="zh-CN"]) .kicker{
+  letter-spacing: .26em;
+  padding-left: .26em;
+}
+html:not([lang="zh-CN"]) .desc{
+  line-height: 1.85;
+}
+html:not([lang="zh-CN"]) .title.small{
+  font-size: clamp(1.15rem, 3vw, 2rem);
+  line-height: 1.3;
+}
+
+/* ============ 响应式 ============ */
+@media (max-width: 560px){
+  .dots{ right: 8px; gap: 11px; }
+  .dots button{ width: 7px; height: 7px; }
+  .dots button.on{ height: 20px; }
+  .tbody{ min-height: 12em; }
+  .lang-grid{ grid-template-columns: repeat(2, 1fr); }
+  .lang-card code{ font-size: .56rem; }
+  .lang-wrap{ top: 10px; right: 10px; }
+  .lang-btn{ font-size: .68rem; padding: .45em .85em; }
+  .lang-menu{ min-width: 138px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- 背景粒子 -->
+<canvas id="bg"></canvas>
+
+<!-- 光影 -->
+<div class="glow g1"></div>
+<div class="glow g2"></div>
+<div class="glow g3"></div>
+
+<!-- 烟花 -->
+<canvas id="fw"></canvas>
+
+<!-- 语言切换下拉 -->
+<div class="lang-wrap" id="langWrap">
+  <button class="lang-btn" id="langBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+    <span class="lang-current">中</span>
+    <svg class="lang-caret" width="10" height="6" viewBox="0 0 10 6" aria-hidden="true">
+      <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <ul class="lang-menu" id="langMenu" role="listbox" aria-label="Language"></ul>
+</div>
+
+<!-- 滚动 PPT -->
+<div class="scroller" id="scroller">
+
+  <!-- ===== 第 1 页 ===== -->
+  <section class="page" data-page="0">
+    <div class="wrap">
+      <div class="pill reveal">10 · 24</div>
+      <h1 class="hero-title reveal" style="--d:.08s">1024</h1>
+      <div class="hero-line reveal" style="--d:.18s"></div>
+      <p class="hero-sub reveal" style="--d:.26s" data-i18n="p1.sub">程序员节</p>
+      <div class="typer reveal" style="--d:.4s">
+        <span class="tk">&gt;</span><span id="type1"></span><span class="caret"></span>
+      </div>
+      <div class="hint reveal" style="--d:.7s">
+        <span data-i18n="p1.scroll">向下滚动</span>
+        <span class="mouse"><i></i></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 第 2 页 ===== -->
+  <section class="page" data-page="1">
+    <div class="wrap">
+      <p class="kicker reveal" data-i18n="p2.kicker">为什么是 1024</p>
+      <h2 class="title reveal" style="--d:.08s">2<sup>10</sup> = <span id="num1">0</span></h2>
+      <p class="desc reveal" style="--d:.18s" data-i18n="p2.desc" data-i18n-html>
+        它是 2 的 10 次方，是计算机世界里最温柔的整数。<br>
+        1024B = 1KB，1024KB = 1MB，1024MB = 1GB……
+      </p>
+      <div class="cards reveal" style="--d:.3s">
+        <div class="mini"><b>1024</b><span>B = 1 KB</span></div>
+        <div class="mini"><b>1024</b><span>KB = 1 MB</span></div>
+        <div class="mini"><b>1024</b><span>MB = 1 GB</span></div>
+      </div>
+      <p class="quote reveal" style="--d:.42s" data-i18n="p2.quote">所以，我们把 10 月 24 日，留给了写代码的人。</p>
+    </div>
+  </section>
+
+  <!-- ===== 第 3 页 ===== -->
+  <section class="page" data-page="2">
+    <div class="wrap">
+      <p class="kicker reveal" data-i18n="p3.kicker">日常</p>
+      <div class="terminal reveal" style="--d:.12s">
+        <div class="tbar">
+          <i class="r"></i><i class="y"></i><i class="g"></i>
+          <span>~/life — bash</span>
+        </div>
+        <div class="tbody" id="term"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 第 4 页 ===== -->
+  <section class="page" data-page="3">
+    <div class="wrap">
+      <p class="kicker reveal" data-i18n="p4.kicker">你好，世界</p>
+      <h2 class="title small reveal" style="--d:.07s" data-i18n="p4.title">每一行 Hello World，都是故事的开始</h2>
+      <div class="lang-grid">
+        <div class="lang-card reveal" style="--d:.10s">
+          <div class="lc-head"><i style="--c:#f7df1e"></i>JavaScript</div>
+          <code>console.log("Hello")</code>
+        </div>
+        <div class="lang-card reveal" style="--d:.16s">
+          <div class="lc-head"><i style="--c:#4b8bbe"></i>Python</div>
+          <code>print("Hello, World!")</code>
+        </div>
+        <div class="lang-card reveal" style="--d:.22s">
+          <div class="lc-head"><i style="--c:#f89820"></i>Java</div>
+          <code>System.out.println("Hi");</code>
+        </div>
+        <div class="lang-card reveal" style="--d:.28s">
+          <div class="lc-head"><i style="--c:#5c6bc0"></i>C</div>
+          <code>printf("Hello\n");</code>
+        </div>
+        <div class="lang-card reveal" style="--d:.34s">
+          <div class="lc-head"><i style="--c:#00add8"></i>Go</div>
+          <code>fmt.Println("Hello")</code>
+        </div>
+        <div class="lang-card reveal" style="--d:.40s">
+          <div class="lc-head"><i style="--c:#dea584"></i>Rust</div>
+          <code>println!("Hello!");</code>
+        </div>
+      </div>
+      <p class="quote reveal" style="--d:.5s" data-i18n="p4.quote">语言在变，热爱不变。</p>
+    </div>
+  </section>
+
+  <!-- ===== 第 5 页 庆祝 ===== -->
+  <section class="page finale" data-page="4">
+    <div class="halo"></div>
+    <div class="wrap">
+      <p class="kicker reveal" data-i18n="p5.kicker">1024 节快乐</p>
+      <h2 class="final-title reveal" style="--d:.08s" data-i18n="p5.title">程序员节快乐</h2>
+      <p class="final-sub reveal" style="--d:.2s">10 · 24</p>
+      <div class="tags reveal" style="--d:.3s">
+        <span data-i18n="p5.tag1">0 错误</span>
+        <span data-i18n="p5.tag2">0 警告</span>
+        <span data-i18n="p5.tag3">需求清晰</span>
+        <span data-i18n="p5.tag4">头发浓密</span>
+      </div>
+      <p class="final-foot reveal" style="--d:.46s" data-i18n="p5.foot">愿你写的每一行代码，都被世界温柔以待。</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- 导航点 -->
+<nav class="dots" id="dots"></nav>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ================= 工具 ================= */
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.prototype.slice.call(r.querySelectorAll(s));
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  function fit(canvas){
+    canvas.width  = Math.floor(innerWidth  * DPR);
+    canvas.height = Math.floor(innerHeight * DPR);
+    canvas.style.width  = innerWidth  + 'px';
+    canvas.style.height = innerHeight + 'px';
+    const c = canvas.getContext('2d');
+    c.setTransform(DPR, 0, 0, DPR, 0, 0);
+    return c;
+  }
+
+  /* ================= 语言元信息 ================= */
+  const LANG_META = {
+    zh: { name: '中文',      short: '中', htmlLang: 'zh-CN' },
+    en: { name: 'English',   short: 'EN', htmlLang: 'en' },
+    ja: { name: '日本語',    short: '日', htmlLang: 'ja' },
+    ko: { name: '한국어',    short: '한', htmlLang: 'ko' },
+    fr: { name: 'Français',  short: 'FR', htmlLang: 'fr' },
+    de: { name: 'Deutsch',   short: 'DE', htmlLang: 'de' },
+    es: { name: 'Español',   short: 'ES', htmlLang: 'es' },
+    ru: { name: 'Русский',   short: 'RU', htmlLang: 'ru' }
+  };
+  const LANGS = Object.keys(LANG_META);
+
+  /* ================= i18n 字典 ================= */
+  const I18N = {
+    /* ---------- 中文 ---------- */
+    zh: {
+      'meta.title': '1024 · 程序员节快乐',
+      'p1.sub': '程序员节',
+      'p1.scroll': '向下滚动',
+      'p2.kicker': '为什么是 1024',
+      'p2.desc': '它是 2 的 10 次方，是计算机世界里最温柔的整数。<br>1024B = 1KB，1024KB = 1MB，1024MB = 1GB……',
+      'p2.quote': '所以，我们把 10 月 24 日，留给了写代码的人。',
+      'p3.kicker': '日常',
+      'p4.kicker': '你好，世界',
+      'p4.title': '每一行 Hello World，都是故事的开始',
+      'p4.quote': '语言在变，热爱不变。',
+      'p5.kicker': '1024 节快乐',
+      'p5.title': '程序员节快乐',
+      'p5.tag1': '0 错误',
+      'p5.tag2': '0 警告',
+      'p5.tag3': '需求清晰',
+      'p5.tag4': '头发浓密',
+      'p5.foot': '愿你写的每一行代码，都被世界温柔以待。',
+      type: '你好，世界！',
+      term: [
+        { c: '$ whoami', cmd: true },
+        { c: '> 一个普普通通的程序员' },
+        { c: '$ cat life.log', cmd: true },
+        { c: '> 09:00  打开 IDE，今天一定能写完' },
+        { c: '> 11:30  找到了！原来是这里' },
+        { c: '> 14:00  修好一个，冒出三个新的' },
+        { c: '> 18:00  能跑就行，千万别动它' },
+        { c: '> 23:59  git commit -m "fix"' },
+        { c: '$ sudo make me happy', cmd: true },
+        { c: '> 权限不足？不，你值得被温柔以待 🎉' }
+      ]
+    },
+
+    /* ---------- 英文 ---------- */
+    en: {
+      'meta.title': "1024 · Happy Programmer's Day",
+      'p1.sub': "Programmer's Day",
+      'p1.scroll': 'Scroll down',
+      'p2.kicker': 'Why 1024',
+      'p2.desc': "It's 2 to the 10th — the gentlest integer in computing.<br>1024B = 1KB, 1024KB = 1MB, 1024MB = 1GB ...",
+      'p2.quote': 'So we gave October 24th to the people who write code.',
+      'p3.kicker': 'Daily Life',
+      'p4.kicker': 'Hello, World',
+      'p4.title': 'Every Hello World is the start of a story',
+      'p4.quote': "Languages change. The passion doesn't.",
+      'p5.kicker': 'Happy 1024 Day',
+      'p5.title': "Happy Programmer's Day",
+      'p5.tag1': '0 errors',
+      'p5.tag2': '0 warnings',
+      'p5.tag3': 'clear specs',
+      'p5.tag4': 'full hair',
+      'p5.foot': 'May every line you write be treated gently by the world.',
+      type: 'Hello, World!',
+      term: [
+        { c: '$ whoami', cmd: true },
+        { c: '> Just an ordinary developer' },
+        { c: '$ cat life.log', cmd: true },
+        { c: "> 09:00  Open the IDE. Today I'll finish it." },
+        { c: '> 11:30  Found it! It was right there.' },
+        { c: '> 14:00  Fixed one, three more appeared.' },
+        { c: "> 18:00  It works — don't touch it." },
+        { c: '> 23:59  git commit -m "fix"' },
+        { c: '$ sudo make me happy', cmd: true },
+        { c: '> Permission denied? No — you deserve kindness 🎉' }
+      ]
+    },
+
+    /* ---------- 日本語 ---------- */
+    ja: {
+      'meta.title': '1024 · プログラマーの日おめでとう',
+      'p1.sub': 'プログラマーの日',
+      'p1.scroll': '下にスクロール',
+      'p2.kicker': 'なぜ 1024 なのか',
+      'p2.desc': '2 の 10 乗 —— コンピュータの世界で最も優しい整数。<br>1024B = 1KB、1024KB = 1MB、1024MB = 1GB……',
+      'p2.quote': 'だから 10 月 24 日を、コードを書く人たちに贈る。',
+      'p3.kicker': '日常',
+      'p4.kicker': 'ハロー・ワールド',
+      'p4.title': 'すべての Hello World は、物語の始まり',
+      'p4.quote': '言語は変わっても、情熱は変わらない。',
+      'p5.kicker': '1024 の日おめでとう',
+      'p5.title': 'プログラマーの日おめでとう',
+      'p5.tag1': '0 エラー',
+      'p5.tag2': '0 警告',
+      'p5.tag3': '明確な仕様',
+      'p5.tag4': 'ふさふさの髪',
+      'p5.foot': 'あなたが書くすべてのコードが、世界に優しく扱われますように。',
+      type: 'ハロー、ワールド！',
+      term: [
+        { c: '$ whoami', cmd: true },
+        { c: '> どこにでもいるプログラマー' },
+        { c: '$ cat life.log', cmd: true },
+        { c: '> 09:00  IDE を開く。今日こそ終わるはず' },
+        { c: '> 11:30  見つけた！ここだったのか' },
+        { c: '> 14:00  一つ直したら、三つ増えた' },
+        { c: '> 18:00  動けばいい。触るな危険' },
+        { c: '> 23:59  git commit -m "fix"' },
+        { c: '$ sudo make me happy', cmd: true },
+        { c: '> 権限不足？いいえ、あなたは優しくされるべきです 🎉' }
+      ]
+    },
+
+    /* ---------- 한국어 ---------- */
+    ko: {
+      'meta.title': '1024 · 프로그래머의 날 축하합니다',
+      'p1.sub': '프로그래머의 날',
+      'p1.scroll': '아래로 스크롤',
+      'p2.kicker': '왜 1024 일까',
+      'p2.desc': '2의 10제곱 — 컴퓨터 세계에서 가장 다정한 정수.<br>1024B = 1KB, 1024KB = 1MB, 1024MB = 1GB ……',
+      'p2.quote': '그래서 10월 24일을 코드를 쓰는 사람들에게 바칩니다.',
+      'p3.kicker': '일상',
+      'p4.kicker': '헬로, 월드',
+      'p4.title': '모든 Hello World 는 이야기의 시작',
+      'p4.quote': '언어는 변해도 열정은 변하지 않는다.',
+      'p5.kicker': '1024 의 날 축하',
+      'p5.title': '프로그래머의 날 축하합니다',
+      'p5.tag1': '0 오류',
+      'p5.tag2': '0 경고',
+      'p5.tag3': '명확한 요구사항',
+      'p5.tag4': '풍성한 머리카락',
+      'p5.foot': '당신이 쓰는 모든 코드가 세상에 다정하게 대접받기를.',
+      type: '안녕, 월드!',
+      term: [
+        { c: '$ whoami', cmd: true },
+        { c: '> 평범한 프로그래머' },
+        { c: '$ cat life.log', cmd: true },
+        { c: '> 09:00  IDE 실행. 오늘은 끝낼 수 있어' },
+        { c: '> 11:30  찾았다! 여기였구나' },
+        { c: '> 14:00  하나 고쳤더니 셋이 생겼다' },
+        { c: '> 18:00  돌아가면 됐다. 건드리지 마' },
+        { c: '> 23:59  git commit -m "fix"' },
+        { c: '$ sudo make me happy', cmd: true },
+        { c: '> 권한 부족? 아니, 당신은 다정하게 대접받아야 해요 🎉' }
+      ]
+    },
+
+    /* ---------- Français ---------- */
+    fr: {
+      'meta.title': '1024 · Joyeuse journée des programmeurs',
+      'p1.sub': 'Journée des programmeurs',
+      'p1.scroll': 'Défiler vers le bas',
+      'p2.kicker': 'Pourquoi 1024',
+      'p2.desc': "C'est 2 puissance 10 — l'entier le plus doux de l'informatique.<br>1024o = 1Ko, 1024Ko = 1Mo, 1024Mo = 1Go ……",
+      'p2.quote': 'C\'est pourquoi nous réservons le 24 octobre à ceux qui écrivent du code.',
+      'p3.kicker': 'Vie quotidienne',
+      'p4.kicker': 'Bonjour, le monde',
+      'p4.title': "Chaque Hello World est le début d'une histoire",
+      'p4.quote': 'Les langages changent. La passion reste.',
+      'p5.kicker': 'Joyeux 1024',
+      'p5.title': 'Joyeuse journée des programmeurs',
+      'p5.tag1': '0 erreur',
+      'p5.tag2': '0 avertissement',
+      'p5.tag3': 'Spécifications claires',
+      'p5.tag4': 'Cheveux fournis',
+      'p5.foot': 'Que chaque ligne que vous écrivez soit traitée avec douceur par le monde.',
+      type: 'Bonjour, le monde !',
+      term: [
+        { c: '$ whoami', cmd: true },
+        { c: '> Un développeur tout à fait ordinaire' },
+        { c: '$ cat life.log', cmd: true },
+        { c: "> 09:00  Ouvrir l'IDE. Aujourd'hui, je finis." },
+        { c: "> 11:30  Trouvé ! C'était là." },
+        { c: '> 14:00  Un corrigé, trois nouveaux.' },
+        { c: "> 18:00  Ça marche — n'y touche plus." },
+        { c: '> 23:59  git commit -m "fix"' },
+        { c: '$ sudo make me happy', cmd: true },
+        { c: '> Permission refusée ? Non — tu mérites de la douceur 🎉' }
+      ]
+    },
+
+    /* ---------- Deutsch ---------- */
+    de: {
+      'meta.title': '1024 · Froher Tag des Programmierers',
+      'p1.sub': 'Tag des Programmierers',
+      'p1.scroll': 'Nach unten scrollen',
+      'p2.kicker': 'Warum 1024',
+      'p2.desc': '2 hoch 10 — die sanfteste ganze Zahl der Informatik.<br>1024B = 1KB, 1024KB = 1MB, 1024MB = 1GB ……',
+      'p2.quote': 'Deshalb widmen wir den 24. Oktober denen, die Code schreiben.',
+      'p3.kicker': 'Alltag',
+      'p4.kicker': 'Hallo, Welt',
+      'p4.title': 'Jedes Hello World ist der Anfang einer Geschichte',
+      'p4.quote': 'Sprachen ändern sich. Die Leidenschaft nicht.',
+      'p5.kicker': 'Frohes 1024',
+      'p5.title': 'Frohen Tag des Programmierers',
+      'p5.tag1': '0 Fehler',
+      'p5.tag2': '0 Warnungen',
+      'p5.tag3': 'Klare Anforderungen',
+      'p5.tag4': 'Volles Haar',
+      'p5.foot': 'Möge jede Zeile Code, die du schreibst, von der Welt sanft behandelt werden.',
+      type: 'Hallo, Welt!',
+      term: [
+        { c: '$ whoami', cmd: true },
+        { c: '> Ein ganz gewöhnlicher Entwickler' },
+        { c: '$ cat life.log', cmd: true },
+        { c: '> 09:00  IDE öffnen. Heute schaffe ich es.' },
+        { c: '> 11:30  Gefunden! Da war es.' },
+        { c: '> 14:00  Eins behoben, drei neue.' },
+        { c: '> 18:00  Läuft — bloß nicht anfassen.' },
+        { c: '> 23:59  git commit -m "fix"' },
+        { c: '$ sudo make me happy', cmd: true },
+        { c: '> Keine Berechtigung? Nein — du verdienst Freundlichkeit 🎉' }
+      ]
+    },
+
+    /* ---------- Español ---------- */
+    es: {
+      'meta.title': '1024 · Feliz Día del Programador',
+      'p1.sub': 'Día del Programador',
+      'p1.scroll': 'Desplázate hacia abajo',
+      'p2.kicker': 'Por qué 1024',
+      'p2.desc': 'Es 2 elevado a 10 — el entero más amable de la informática.<br>1024B = 1KB, 1024KB = 1MB, 1024MB = 1GB ……',
+      'p2.quote': 'Por eso dedicamos el 24 de octubre a quienes escriben código.',
+      'p3.kicker': 'Vida diaria',
+      'p4.kicker': 'Hola, mundo',
+      'p4.title': 'Cada Hello World es el comienzo de una historia',
+      'p4.quote': 'Los lenguajes cambian. La pasión no.',
+      'p5.kicker': 'Feliz 1024',
+      'p5.title': 'Feliz Día del Programador',
+      'p5.tag1': '0 errores',
+      'p5.tag2': '0 advertencias',
+      'p5.tag3': 'Requisitos claros',
+      'p5.tag4': 'Pelo abundante',
+      'p5.foot': 'Que cada línea que escribas sea tratada con cariño por el mundo.',
+      type: '¡Hola, mundo!',
+      term: [
+        { c: '$ whoami', cmd: true },
+        { c: '> Un programador de lo más normal' },
+        { c: '$ cat life.log', cmd: true },
+        { c: '> 09:00  Abrir el IDE. Hoy sí termino.' },
+        { c: '> 11:30  ¡Encontrado! Estaba aquí.' },
+        { c: '> 14:00  Arreglo uno, aparecen tres.' },
+        { c: '> 18:00  Funciona — no lo toques.' },
+        { c: '> 23:59  git commit -m "fix"' },
+        { c: '$ sudo make me happy', cmd: true },
+        { c: '> ¿Permiso denegado? No — mereces cariño 🎉' }
+      ]
+    },
+
+    /* ---------- Русский ---------- */
+    ru: {
+      'meta.title': '1024 · С Днём программиста',
+      'p1.sub': 'День программиста',
+      'p1.scroll': 'Прокрутите вниз',
+      'p2.kicker': 'Почему 1024',
+      'p2.desc': 'Это 2 в 10-й степени — самое доброе целое число в мире вычислений.<br>1024Б = 1КБ, 1024КБ = 1МБ, 1024МБ = 1ГБ ……',
+      'p2.quote': 'Поэтому 24 октября мы посвящаем тем, кто пишет код.',
+      'p3.kicker': 'Будни',
+      'p4.kicker': 'Привет, мир',
+      'p4.title': 'Каждый Hello World — начало истории',
+      'p4.quote': 'Языки меняются. Страсть — нет.',
+      'p5.kicker': 'С 1024-м!',
+      'p5.title': 'С Днём программиста',
+      'p5.tag1': '0 ошибок',
+      'p5.tag2': '0 предупреждений',
+      'p5.tag3': 'Ясные требования',
+      'p5.tag4': 'Густые волосы',
+      'p5.foot': 'Пусть каждая написанная тобой строка будет встречена миром с теплом.',
+      type: 'Привет, мир!',
+      term: [
+        { c: '$ whoami', cmd: true },
+        { c: '> Самый обычный программист' },
+        { c: '$ cat life.log', cmd: true },
+        { c: '> 09:00  Открыть IDE. Сегодня точно закончу.' },
+        { c: '> 11:30  Нашёл! Вот оно где.' },
+        { c: '> 14:00  Исправил одно, появилось три.' },
+        { c: '> 18:00  Работает — не трогай.' },
+        { c: '> 23:59  git commit -m "fix"' },
+        { c: '$ sudo make me happy', cmd: true },
+        { c: '> Нет прав? Нет — ты заслуживаешь тепла 🎉' }
+      ]
+    }
+  };
+
+  /* ================= 语言检测 ================= */
+  function detectLang(){
+    try{
+      const saved = localStorage.getItem('code1024-lang');
+      if (saved && I18N[saved]) return saved;
+    }catch(e){}
+    const nav = (navigator.language || 'en').toLowerCase();
+    const order = ['zh','ja','ko','fr','de','es','ru','en'];
+    for (let i = 0; i < order.length; i++){
+      if (nav.startsWith(order[i])) return order[i];
+    }
+    return 'en';
+  }
+
+  let lang = detectLang();
+
+  /* ================= 背景粒子系统 ================= */
+  const bgCanvas = $('#bg');
+  let bctx = fit(bgCanvas);
+
+  const HUES = [200, 265, 165, 300, 340];
+  let hue = 200;
+  let targetHue = 200;
+
+  const mouse = { x: -9999, y: -9999 };
+  window.addEventListener('pointermove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  }, { passive: true });
+  window.addEventListener('pointerleave', () => {
+    mouse.x = -9999; mouse.y = -9999;
+  });
+
+  let particles = [];
+
+  function initParticles(){
+    const count = Math.min(130, Math.max(46, Math.floor(innerWidth * innerHeight / 13000)));
+    particles = [];
+    for (let i = 0; i < count; i++){
+      particles.push({
+        x: Math.random() * innerWidth,
+        y: Math.random() * innerHeight,
+        vx: rand(-0.3, 0.3),
+        vy: rand(-0.3, 0.3),
+        r: rand(0.8, 2.2)
+      });
+    }
+  }
+  initParticles();
+
+  const LINK_DIST = 132;
+  const LINK_D2 = LINK_DIST * LINK_DIST;
+  const MOUSE_D2 = 17000;
+
+  function bgLoop(){
+    bctx.clearRect(0, 0, innerWidth, innerHeight);
+
+    hue += (targetHue - hue) * 0.035;
+    if (Math.abs(targetHue - hue) < 0.05) hue = targetHue;
+
+    for (let i = 0; i < particles.length; i++){
+      const p = particles[i];
+
+      const mdx = p.x - mouse.x;
+      const mdy = p.y - mouse.y;
+      const md2 = mdx * mdx + mdy * mdy;
+      if (md2 < MOUSE_D2 && md2 > 1){
+        const md = Math.sqrt(md2);
+        const f = (MOUSE_D2 - md2) / MOUSE_D2;
+        p.vx += (mdx / md) * f * 0.45;
+        p.vy += (mdy / md) * f * 0.45;
+      }
+
+      p.vx *= 0.984;
+      p.vy *= 0.984;
+
+      const sp = Math.hypot(p.vx, p.vy);
+      if (sp < 0.11){
+        p.vx += rand(-0.06, 0.06);
+        p.vy += rand(-0.06, 0.06);
+      } else if (sp > 3){
+        p.vx *= 3 / sp;
+        p.vy *= 3 / sp;
+      }
+
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < -25) p.x = innerWidth + 25;
+      else if (p.x > innerWidth + 25) p.x = -25;
+      if (p.y < -25) p.y = innerHeight + 25;
+      else if (p.y > innerHeight + 25) p.y = -25;
+    }
+
+    bctx.lineWidth = 1;
+    for (let i = 0; i < particles.length; i++){
+      const a = particles[i];
+      for (let j = i + 1; j < particles.length; j++){
+        const b = particles[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < LINK_D2){
+          const alpha = (1 - Math.sqrt(d2) / LINK_DIST) * 0.3;
+          bctx.strokeStyle = 'hsl(' + hue + ' 90% 66% / ' + alpha.toFixed(3) + ')';
+          bctx.beginPath();
+          bctx.moveTo(a.x, a.y);
+          bctx.lineTo(b.x, b.y);
+          bctx.stroke();
+        }
+      }
+    }
+
+    bctx.fillStyle = 'hsl(' + hue + ' 95% 74% / .85)';
+    for (let i = 0; i < particles.length; i++){
+      const p = particles[i];
+      bctx.beginPath();
+      bctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      bctx.fill();
+    }
+
+    requestAnimationFrame(bgLoop);
+  }
+  requestAnimationFrame(bgLoop);
+
+  /* ================= 烟花系统 ================= */
+  const fwCanvas = $('#fw');
+  let fctx = fit(fwCanvas);
+
+  let fwOn = false;
+  let fwRaf = null;
+  let fwTimer = null;
+  let rockets = [];
+  let sparks = [];
+
+  function launchRocket(){
+    rockets.push({
+      x: rand(innerWidth * 0.15, innerWidth * 0.85),
+      y: innerHeight + 10,
+      vx: rand(-1.1, 1.1),
+      vy: rand(-13, -9.5),
+      hue: (targetHue + rand(-60, 60) + 360) % 360
+    });
+  }
+
+  function explode(x, y, hueBase){
+    const n = 60 + Math.floor(Math.random() * 60);
+    for (let i = 0; i < n; i++){
+      const a = (i / n) * Math.PI * 2 + rand(-0.06, 0.06);
+      const sp = rand(1.4, 7);
+      sparks.push({
+        x: x, y: y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 1,
+        decay: rand(0.008, 0.02),
+        hue: hueBase + rand(-32, 32),
+        size: rand(1, 2.6)
+      });
+    }
+    sparks.push({
+      x: x, y: y, vx: 0, vy: 0,
+      life: 1, decay: 0.07,
+      hue: hueBase, size: 24
+    });
+  }
+
+  function fwLoop(){
+    if (!fwOn) return;
+
+    fctx.globalCompositeOperation = 'destination-out';
+    fctx.fillStyle = 'rgba(0,0,0,0.16)';
+    fctx.fillRect(0, 0, innerWidth, innerHeight);
+    fctx.globalCompositeOperation = 'lighter';
+
+    for (let i = rockets.length - 1; i >= 0; i--){
+      const r = rockets[i];
+      r.x += r.vx;
+      r.y += r.vy;
+      r.vy += 0.17;
+
+      fctx.fillStyle = 'hsl(' + r.hue + ' 100% 72% / .9)';
+      fctx.beginPath();
+      fctx.arc(r.x, r.y, 2.2, 0, Math.PI * 2);
+      fctx.fill();
+
+      if (r.vy >= 0 || r.y < innerHeight * 0.1){
+        explode(r.x, r.y, r.hue);
+        rockets.splice(i, 1);
+      }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--){
+      const s = sparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vy += 0.055;
+      s.vx *= 0.986;
+      s.vy *= 0.986;
+      s.life -= s.decay;
+
+      if (s.life <= 0){
+        sparks.splice(i, 1);
+        continue;
+      }
+
+      const a = s.life;
+      const r = s.size * (0.35 + 0.65 * a);
+      fctx.fillStyle = 'hsl(' + s.hue + ' 100% ' + (62 + 30 * a).toFixed(0) + '% / ' + a.toFixed(3) + ')';
+      fctx.beginPath();
+      fctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+      fctx.fill();
+    }
+
+    fwRaf = requestAnimationFrame(fwLoop);
+  }
+
+  function startFireworks(){
+    if (fwOn) return;
+    fwOn = true;
+    rockets = [];
+    sparks = [];
+    fctx.clearRect(0, 0, innerWidth, innerHeight);
+
+    launchRocket();
+    setTimeout(launchRocket, 250);
+
+    fwTimer = setInterval(function(){
+      if (fwOn && rockets.length < 4) launchRocket();
+    }, 680);
+
+    fwRaf = requestAnimationFrame(fwLoop);
+
+    spawnConfetti(90);
+    setTimeout(function(){ if (fwOn) spawnConfetti(60); }, 1500);
+    setTimeout(function(){ if (fwOn) spawnConfetti(50); }, 3200);
+  }
+
+  function stopFireworks(){
+    fwOn = false;
+    if (fwRaf) cancelAnimationFrame(fwRaf);
+    if (fwTimer) clearInterval(fwTimer);
+    fwRaf = null;
+    fwTimer = null;
+    rockets = [];
+    sparks = [];
+    fctx.clearRect(0, 0, innerWidth, innerHeight);
+  }
+
+  /* ================= 彩带 ================= */
+  const CONFETTI_COLORS = ['#ff4d6d', '#ffd166', '#06d6a0', '#4cc9f0', '#b388ff', '#ff9f1c', '#ffffff'];
+
+  function spawnConfetti(n){
+    for (let i = 0; i < n; i++){
+      const el = document.createElement('i');
+      el.className = 'confetti';
+      el.style.left = rand(-4, 104) + 'vw';
+      el.style.background = CONFETTI_COLORS[(Math.random() * CONFETTI_COLORS.length) | 0];
+      el.style.width = rand(5, 10).toFixed(1) + 'px';
+      el.style.height = rand(9, 18).toFixed(1) + 'px';
+
+      const dur = rand(2.6, 5.2);
+      el.style.animationDuration = dur.toFixed(2) + 's';
+      el.style.animationDelay = rand(0, 2.2).toFixed(2) + 's';
+      el.style.setProperty('--sx', rand(-180, 180).toFixed(0) + 'px');
+      el.style.setProperty('--rot', rand(360, 1080).toFixed(0) + 'deg');
+
+      document.body.appendChild(el);
+      setTimeout(function(){ el.remove(); }, (dur + 2.8) * 1000);
+    }
+  }
+
+  /* ================= 打字机 / 计数 / 终端 ================= */
+  function typeText(el, text, speed){
+    if (!el) return;
+    if (el._timer) clearInterval(el._timer);
+    el.textContent = '';
+    let i = 0;
+    el._timer = setInterval(function(){
+      i++;
+      el.textContent = text.slice(0, i);
+      if (i >= text.length) clearInterval(el._timer);
+    }, speed || 60);
+  }
+
+  function countTo(el, to, dur){
+    if (!el) return;
+    const start = performance.now();
+    function step(t){
+      const p = Math.min((t - start) / dur, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.floor(e * to);
+      if (p < 1) requestAnimationFrame(step);
+      else el.textContent = to;
+    }
+    requestAnimationFrame(step);
+  }
+
+  let termToken = 0;
+
+  async function runTerminal(){
+    const box = $('#term');
+    if (!box) return;
+    const my = ++termToken;
+    const lines = I18N[lang].term;
+    box.innerHTML = '';
+    box.scrollTop = 0;
+
+    for (let i = 0; i < lines.length; i++){
+      if (my !== termToken) return;
+      const line = lines[i];
+      const div = document.createElement('div');
+      div.className = 'tline' + (line.cmd ? ' cmd' : '');
+      div.textContent = line.c;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+      await sleep(line.cmd ? 360 : 280);
+    }
+  }
+
+  /* ================= 页面切换 ================= */
+  const scroller = $('#scroller');
+  const pages = $$('.page');
+  const dotsNav = $('#dots');
+  let current = -1;
+
+  const dots = pages.map(function(_, i){
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.addEventListener('click', function(){
+      scroller.scrollTo({
+        top: i * pages[0].offsetHeight,
+        behavior: 'smooth'
+      });
+    });
+    dotsNav.appendChild(b);
+    return b;
+  });
+
+  const PAGE_ACTIONS = {
+    0: function(){
+      typeText($('#type1'), I18N[lang].type, 58);
+    },
+    1: function(){
+      countTo($('#num1'), 1024, 1500);
+    },
+    2: function(){
+      runTerminal();
+    },
+    3: function(){
+      /* 纯 CSS 动画 */
+    },
+    4: function(){
+      startFireworks();
+    }
+  };
+
+  function activate(i){
+    if (i === current) return;
+    current = i;
+
+    pages.forEach(function(p, idx){
+      p.classList.toggle('active', idx === i);
+    });
+    dots.forEach(function(d, idx){
+      d.classList.toggle('on', idx === i);
+    });
+
+    targetHue = HUES[i] !== undefined ? HUES[i] : 200;
+    document.documentElement.style.setProperty('--hue', targetHue);
+
+    if (i !== pages.length - 1) stopFireworks();
+
+    const act = PAGE_ACTIONS[i];
+    if (act) setTimeout(act, 130);
+  }
+
+  let scrollTick = false;
+  scroller.addEventListener('scroll', function(){
+    if (scrollTick) return;
+    scrollTick = true;
+    requestAnimationFrame(function(){
+      scrollTick = false;
+      const h = pages[0].offsetHeight || 1;
+      let idx = Math.round(scroller.scrollTop / h);
+      idx = Math.max(0, Math.min(pages.length - 1, idx));
+      activate(idx);
+    });
+  }, { passive: true });
+
+  /* ================= 语言下拉菜单 ================= */
+  const langWrap = $('#langWrap');
+  const langBtn  = $('#langBtn');
+  const langMenu = $('#langMenu');
+
+  function buildLangMenu(){
+    langMenu.innerHTML = '';
+    LANGS.forEach(function(code){
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.dataset.lang = code;
+      li.textContent = LANG_META[code].name;
+      li.addEventListener('click', function(){
+        applyLang(code, true);
+        closeMenu();
+      });
+      langMenu.appendChild(li);
+    });
+  }
+
+  function openMenu(){
+    langWrap.classList.add('open');
+    langBtn.setAttribute('aria-expanded', 'true');
+  }
+  function closeMenu(){
+    langWrap.classList.remove('open');
+    langBtn.setAttribute('aria-expanded', 'false');
+  }
+  function toggleMenu(){
+    if (langWrap.classList.contains('open')) closeMenu();
+    else openMenu();
+  }
+
+  langBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  document.addEventListener('pointerdown', function(e){
+    if (!langWrap.contains(e.target)) closeMenu();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeMenu();
+  });
+
+  /* ================= i18n 应用 ================= */
+  function updateDotsLabel(){
+    const isZh = (lang === 'zh');
+    dots.forEach(function(d, idx){
+      d.setAttribute('aria-label',
+        isZh ? ('第 ' + (idx + 1) + ' 页') : ('Page ' + (idx + 1)));
+    });
+  }
+
+  function refreshDynamic(){
+    if (current === 0){
+      typeText($('#type1'), I18N[lang].type, 58);
+    } else if (current === 2){
+      runTerminal();
+    }
+  }
+
+  function applyLang(l, refresh){
+    if (!I18N[l]) return;
+    lang = l;
+    const dict = I18N[l];
+
+    // <html lang>
+    document.documentElement.lang = LANG_META[l].htmlLang;
+
+    // 静态文本
+    $$('[data-i18n]').forEach(function(el){
+      const key = el.getAttribute('data-i18n');
+      const val = dict[key];
+      if (typeof val !== 'string') return;
+      if (el.hasAttribute('data-i18n-html')) el.innerHTML = val;
+      else el.textContent = val;
+    });
+
+    // 标题
+    document.title = dict['meta.title'];
+
+    // 按钮当前语言
+    const cur = $('.lang-current');
+    if (cur) cur.textContent = LANG_META[l].short;
+    langBtn.setAttribute('aria-label',
+      (l === 'zh' ? '切换语言' : 'Switch language'));
+
+    // 菜单选中态
+    $$('#langMenu li').forEach(function(li){
+      li.classList.toggle('active', li.dataset.lang === l);
+    });
+
+    // 导航点
+    updateDotsLabel();
+
+    // 记忆
+    try{ localStorage.setItem('code1024-lang', l); }catch(e){}
+
+    // 动态内容
+    if (refresh) refreshDynamic();
+  }
+
+  /* ================= 尺寸变化 ================= */
+  let resizeTimer = null;
+  window.addEventListener('resize', function(){
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      bctx = fit(bgCanvas);
+      fctx = fit(fwCanvas);
+      initParticles();
+      const h = pages[0].offsetHeight || 1;
+      scroller.scrollTop = current * h;
+    }, 180);
+  });
+
+  /* ================= 启动 ================= */
+  buildLangMenu();
+  applyLang(lang, false);
+
+  function boot(){
+    if (current === -1) activate(0);
+  }
+
+  window.addEventListener('load', boot);
+  if (document.readyState === 'complete') boot();
+
+})();
+</script>
+</body>
+</html>
